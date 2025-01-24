@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beautiful Weather App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            background: transparent;
+            backdrop-filter: blur(10px);
+            transition: background 0.5s ease;
+        }
+
+        .weather-container {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            margin-bottom: 20px;
+            animation: fadeIn 1s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 1.2em;
+            margin: 5px 0;
+        }
+
+        .temp {
+            font-size: 4em;
+            font-weight: bold;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-container input {
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .search-container button {
+            padding: 10px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            margin-left: 5px;
+            background-color: #4facfe;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background-color: #00c3fe;
+        }
+
+        .weather-icon {
+            width: 100px;
+            height: 100px;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <input type="text" id="city" placeholder="Enter city name">
+        <button onclick="searchWeather()">Search</button>
+    </div>
+
+    <div class="weather-container">
+        <h1 id="location">Loading...</h1>
+        <img id="weather-icon" class="weather-icon" src="" alt="Weather Icon" style="display: none;">
+        <p class="temp" id="temperature">-- °C</p>
+        <p id="weather-description">Fetching weather details...</p>
+        <p id="extra-info"></p>
+    </div>
+
+    <script>
+        const apiKey = '655acc6b33b14cbebfb95132252201';
+
+        function setDynamicBackground(condition) {
+            const body = document.body;
+            if (condition.includes('Sunny') || condition.includes('Clear')) {
+                body.style.background = 'linear-gradient(to bottom, rgba(247, 183, 51, 0.5), rgba(252, 74, 26, 0.5))';
+            } else if (condition.includes('Rain') || condition.includes('Drizzle')) {
+                body.style.background = 'linear-gradient(to bottom, rgba(0, 198, 255, 0.5), rgba(0, 114, 255, 0.5))';
+            } else if (condition.includes('Cloudy')) {
+                body.style.background = 'linear-gradient(to bottom, rgba(215, 210, 204, 0.5), rgba(48, 67, 82, 0.5))';
+            } else if (condition.includes('Snow')) {
+                body.style.background = 'linear-gradient(to bottom, rgba(230, 218, 218, 0.5), rgba(39, 64, 70, 0.5))';
+            } else {
+                body.style.background = 'linear-gradient(to bottom, rgba(79, 172, 254, 0.5), rgba(0, 242, 254, 0.5))';
+            }
+        }
+
+        function fetchWeatherByCoords(latitude, longitude) {
+            const apiUrl = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${latitude},${longitude}`;
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Unable to fetch weather data.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('location').textContent = `${data.location.name}, ${data.location.country}`;
+                    document.getElementById('temperature').textContent = `${Math.round(data.current.temp_c)} °C`;
+                    document.getElementById('weather-description').textContent = data.current.condition.text;
+                    document.getElementById('extra-info').textContent = `Humidity: ${data.current.humidity}% | Wind: ${data.current.wind_kph} kph`;
+                    document.getElementById('weather-icon').src = `https:${data.current.condition.icon}`;
+                    document.getElementById('weather-icon').style.display = 'block';
+                    setDynamicBackground(data.current.condition.text);
+                })
+                .catch(error => {
+                    document.getElementById('location').textContent = 'Error';
+                    document.getElementById('temperature').textContent = '--';
+                    document.getElementById('weather-description').textContent = error.message;
+                    document.getElementById('extra-info').textContent = '';
+                });
+        }
+
+        function fetchWeatherByCity(city) {
+            const apiUrl = `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${city}`;
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('City not found');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('location').textContent = `${data.location.name}, ${data.location.country}`;
+                    document.getElementById('temperature').textContent = `${Math.round(data.current.temp_c)} °C`;
+                    document.getElementById('weather-description').textContent = data.current.condition.text;
+                    document.getElementById('extra-info').textContent = `Humidity: ${data.current.humidity}% | Wind: ${data.current.wind_kph} kph`;
+                    document.getElementById('weather-icon').src = `https:${data.current.condition.icon}`;
+                    document.getElementById('weather-icon').style.display = 'block';
+                    setDynamicBackground(data.current.condition.text);
+                })
+                .catch(error => {
+                    document.getElementById('location').textContent = 'Error';
+                    document.getElementById('temperature').textContent = '--';
+                    document.getElementById('weather-description').textContent = error.message;
+                    document.getElementById('extra-info').textContent = '';
+                });
+        }
+
+        function searchWeather() {
+            const city = document.getElementById('city').value.trim();
+            if (city) {
+                fetchWeatherByCity(city);
+            } else {
+                alert('Please enter a city name.');
+            }
+        }
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
+                    },
+                    error => {
+                        document.getElementById('location').textContent = 'Location Unavailable';
+                        document.getElementById('temperature').textContent = '--';
+                        document.getElementById('weather-description').textContent = error.message;
+                        document.getElementById('extra-info').textContent = '';
+                    }
+                );
+            } else {
+                document.getElementById('location').textContent = 'Geolocation Not Supported';
+                document.getElementById('temperature').textContent = '--';
+                document.getElementById('weather-description').textContent = '';
+                document.getElementById('extra-info').textContent = '';
+            }
+        }
+
+        // Initialize
+        getLocation();
+    </script>
+</body>
+</html>
